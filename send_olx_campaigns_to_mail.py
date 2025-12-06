@@ -37,7 +37,7 @@ AURA_BODY = (
 AURA_COOKIE = ""
 
 # Default recipient (can be overridden by env var TO_EMAIL)
-TO_EMAIL = os.getenv("TO_EMAIL", "")
+TO_EMAIL = os.getenv("TO_EMAIL", "m.aris.saalda.0@gmail.com")
 
 # ===== Resend (for GitHub Actions) =====
 # Set in GitHub Secrets and passed by the workflow:
@@ -402,4 +402,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
