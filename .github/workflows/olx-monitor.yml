@@ -1,0 +1,64 @@
+name: OLX campaigns monitor
+
+on:
+  # GitHub cron is UTC.
+  # Romania:
+  # - winter: UTC+2  -> 10:00 local ~= 08:00 UTC
+  # - summer: UTC+3  -> 10:00 local ~= 07:00 UTC
+  # Using both keeps you close to 10:00 year-round.
+  schedule:
+    - cron: "0 7 * * *"
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+jobs:
+  run-monitor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      # Persist your "seen links" file across runs.
+      # This avoids "everything is new again" every day.
+      #
+      # This pattern restores the most recent cache with prefix "olx-state-"
+      # and then always saves a new one after the job using a unique key.
+      - name: Restore state cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            aura_links_updating_every_run.json
+          key: olx-state-${{ github.run_id }}
+          restore-keys: |
+            olx-state-
+
+      # IMPORTANT:
+      # Your script should NOT rely on SMTP on GitHub Actions.
+      # Use your Resend-based version instead.
+      #
+      # Also ensure your JSON baseline file is committed in the repo:
+      #   olx_baseline_links_read_only.json
+      #
+      # Rename your script to avoid spaces in filename.
+      - name: Run monitor
+        env:
+          # Recommended: store these in GitHub Secrets
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM }}
+
+          # If your script reads TO_EMAIL from env, you can pass it too.
+          # TO_EMAIL: ${{ secrets.TO_EMAIL }}
+        run: |
+          ls -al
+          python send_olx_campaigns_to_mail.py
